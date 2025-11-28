@@ -4,99 +4,95 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Buzón Secreto 💖</title>
-  <!-- Firebase SDK (modo compatibilidad - funciona en HTML puro) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
     body {
-      background: linear-gradient(to bottom, #1a1a2e, #16213e);
+      background: linear-gradient(to bottom, #2c003e, #1a1a2e);
       color: white;
       min-height: 100vh;
       padding: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
-    .container {
-      max-width: 600px;
-      margin: 0 auto;
-      text-align: center;
-    }
-    h1 {
-      margin: 20px 0;
-      font-weight: 600;
-      color: #ff9aa2;
-    }
-    #messages {
-      background: rgba(0, 0, 0, 0.2);
-      border-radius: 15px;
-      padding: 20px;
-      margin: 20px 0;
-      max-height: 400px;
-      overflow-y: auto;
-      text-align: left;
-    }
-    .message {
-      background: rgba(255, 255, 255, 0.1);
+    .screen { display: none; width: 100%; max-width: 500px; text-align: center; }
+    .active { display: block; }
+    input, button, select {
       padding: 12px;
       margin: 10px 0;
-      border-radius: 10px;
-      position: relative;
-    }
-    .message::before {
-      content: "💌";
-      position: absolute;
-      left: -25px;
-      top: 50%;
-      transform: translateY(-50%);
-    }
-    input, button {
-      padding: 12px 20px;
-      margin: 10px 5px;
+      width: 100%;
       border: none;
       border-radius: 50px;
       font-size: 16px;
       outline: none;
     }
-    input {
-      background: rgba(255, 255, 255, 0.1);
-      color: white;
-      width: 60%;
-    }
+    input, select { background: rgba(255,255,255,0.1); color: white; }
     button {
       background: #ff6b6b;
       color: white;
       cursor: pointer;
-      transition: background 0.3s;
     }
-    button:hover {
-      background: #ff5252;
+    #messages {
+      background: rgba(0,0,0,0.2);
+      border-radius: 15px;
+      padding: 15px;
+      max-height: 350px;
+      overflow-y: auto;
+      text-align: left;
+      margin: 10px 0;
     }
-    .time {
-      font-size: 12px;
-      color: #aaa;
-      float: right;
+    .message {
+      background: rgba(255,255,255,0.1);
+      padding: 10px;
+      margin: 8px 0;
+      border-radius: 10px;
+      font-size: 14px;
     }
-    @media (max-width: 600px) {
-      input { width: 70%; }
+    .de-para {
+      font-weight: bold;
+      color: #ff9aa2;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>💌 Nuestro Buzón Secreto</h1>
+
+  <!-- Pantalla de acceso -->
+  <div id="login" class="screen active">
+    <h2>🔒 Acceso Secreto</h2>
+    <p>Ingresa la contraseña para entrar al buzón.</p>
+    <input type="password" id="passInput" placeholder="Contraseña..." />
+    <button onclick="checkPassword()">Entrar</button>
+    <p id="loginError" style="color:#ff6b6b; margin-top:10px;"></p>
+  </div>
+
+  <!-- Buzón principal -->
+  <div id="buzon" class="screen">
+    <h2>💌 Nuestro Buzón</h2>
     <div id="messages">
-      <p>Cargando mensajes...</p>
+      <p>Cargando...</p>
     </div>
-    <input type="text" id="newMessage" placeholder="Escribe un mensajito..." maxlength="140" autocomplete="off" />
-    <button onclick="sendMessage()">Enviar</button>
+
+    <select id="deSelect">
+      <option value="Tú">Tú</option>
+      <option value="Él">Él</option>
+    </select>
+
+    <select id="paraSelect">
+      <option value="Él">Para: Él</option>
+      <option value="Tú">Para: Tú</option>
+    </select>
+
+    <input type="text" id="msgText" placeholder="Escribe tu mensaje..." maxlength="120" />
+    <button onclick="sendMessage()">Enviar Mensaje</button>
   </div>
 
   <script>
-    // 🔑 Configuración de tu proyecto Firebase (NO CAMBIES ESTO A MENOS QUE CAMBIES PROYECTO)
+    // 🔑 Contraseña secreta (cámbiala por la que quieras)
+    const CLAVE_SECRETA = "mochito123"; // ← ¡EDITA ESTA CONTRASEÑA!
+
+    // Firebase (solo lectura/escritura si sabes la clave)
     const firebaseConfig = {
       apiKey: "AIzaSyB8Xv2Z0sCzFwkx2IMximjKDJO_5Up3w-8",
       authDomain: "buzon-secreto.firebaseapp.com",
@@ -104,57 +100,65 @@
       projectId: "buzon-secreto",
       storageBucket: "buzon-secreto.firebasestorage.app",
       messagingSenderId: "1050514983896",
-      appId: "1:1050514983896:web:4e6637e163bfa5667200ad",
-      measurementId: "G-0W9K588MN6"
+      appId: "1:1050514983896:web:4e6637e163bfa5667200ad"
     };
 
-    // ✅ Inicializa Firebase en modo compatible (funciona en HTML puro)
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     const messagesRef = db.ref('mensajes');
 
-    // 📥 Cargar mensajes en tiempo real
-    messagesRef.on('value', (snapshot) => {
-      const messagesDiv = document.getElementById('messages');
-      const data = snapshot.val();
-      if (data) {
-        const messagesArray = Object.values(data);
-        // Ordenar por tiempo (más reciente primero)
-        messagesArray.sort((a, b) => b.time - a.time);
-        messagesDiv.innerHTML = '';
-        messagesArray.forEach(msg => {
-          const div = document.createElement('div');
-          div.className = 'message';
-          const timeStr = new Date(msg.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-          div.innerHTML = `<span class="time">${timeStr}</span>${msg.text}`;
-          messagesDiv.appendChild(div);
-        });
+    function checkPassword() {
+      const pass = document.getElementById('passInput').value;
+      if (pass === CLAVE_SECRETA) {
+        showScreen('buzon');
+        loadMessages();
       } else {
-        messagesDiv.innerHTML = '<p>¡Sé el primero en escribir un mensajito! 💕</p>';
-      }
-      // Desplazarse al final
-      messagesDiv.scrollTop = messagesDiv.scrollHeight;
-    });
-
-    // 📤 Enviar nuevo mensaje
-    function sendMessage() {
-      const input = document.getElementById('newMessage');
-      const text = input.value.trim();
-      if (text) {
-        messagesRef.push({
-          text: text,
-          time: firebase.database.ServerValue.TIMESTAMP
-        });
-        input.value = '';
-        input.focus();
+        document.getElementById('loginError').textContent = "Contraseña incorrecta 💔";
       }
     }
 
-    // ✨ Enviar con Enter
-    document.getElementById('newMessage').addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
-        sendMessage();
+    function showScreen(id) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+    }
+
+    function loadMessages() {
+      messagesRef.on('value', (snapshot) => {
+        const div = document.getElementById('messages');
+        const data = snapshot.val();
+        if (data) {
+          const msgs = Object.values(data).sort((a, b) => b.time - a.time);
+          div.innerHTML = msgs.map(m => 
+            `<div class="message">
+              <div class="de-para">De: ${m.de} → Para: ${m.para}</div>
+              <div>${m.text}</div>
+              <div style="font-size:11px;color:#aaa;">${new Date(m.time).toLocaleString()}</div>
+            </div>`
+          ).join('');
+        } else {
+          div.innerHTML = '<p>No hay mensajes aún. ¡Sé el primero! 💕</p>';
+        }
+        div.scrollTop = div.scrollHeight;
+      });
+    }
+
+    function sendMessage() {
+      const de = document.getElementById('deSelect').value;
+      const para = document.getElementById('paraSelect').value;
+      const text = document.getElementById('msgText').value.trim();
+      if (text) {
+        messagesRef.push({
+          de: de,
+          para: para,
+          text: text,
+          time: firebase.database.ServerValue.TIMESTAMP
+        });
+        document.getElementById('msgText').value = '';
       }
+    }
+
+    document.getElementById('msgText').addEventListener('keypress', e => {
+      if (e.key === 'Enter') sendMessage();
     });
   </script>
 </body>
