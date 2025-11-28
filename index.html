@@ -7,65 +7,152 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
     body {
-      background: linear-gradient(135deg, #2c003e, #1a1a2e);
-      color: white;
+      background: linear-gradient(135deg, #ffe6e6, #ffccdd);
+      color: #d43b67;
       min-height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
       padding: 20px;
+      position: relative;
+      overflow-x: hidden;
     }
-    .screen { display: none; width: 100%; max-width: 500px; text-align: center; }
-    .active { display: block; }
+
+    /* Corazones flotantes */
+    .heart {
+      position: absolute;
+      font-size: 20px;
+      color: #ff6b81;
+      animation: float 3s ease-in-out infinite;
+      z-index: -1;
+    }
+    @keyframes float {
+      0% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-10px) rotate(10deg); }
+      100% { transform: translateY(0px) rotate(0deg); }
+    }
+
+    .screen {
+      display: none;
+      width: 100%;
+      max-width: 500px;
+      text-align: center;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      position: relative;
+    }
+    .active {
+      display: block;
+    }
+
+    h2 {
+      font-family: 'Dancing Script', cursive;
+      font-size: 2.5rem;
+      color: #d43b67;
+      margin: 20px 0;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+    }
+
     input, button, select {
-      padding: 12px;
+      padding: 12px 20px;
       margin: 10px 0;
       width: 100%;
       border: none;
       border-radius: 50px;
       font-size: 16px;
       outline: none;
+      transition: all 0.3s;
     }
-    input, select { background: rgba(255,255,255,0.1); color: white; }
+    input, select {
+      background: rgba(255, 255, 255, 0.7);
+      color: #d43b67;
+      border: 2px solid #ff9aa2;
+    }
     button {
-      background: #ff6b6b;
+      background: #ff6b81;
       color: white;
       cursor: pointer;
-      transition: background 0.3s;
+      font-weight: bold;
     }
     button:hover {
-      background: #ff5252;
+      background: #ff5277;
+      transform: scale(1.02);
     }
+
     #messages {
-      background: rgba(0,0,0,0.2);
+      background: rgba(255, 255, 255, 0.8);
       border-radius: 15px;
       padding: 15px;
       max-height: 350px;
       overflow-y: auto;
       text-align: left;
       margin: 10px 0;
+      border: 2px solid #ff9aa2;
     }
     .message {
-      background: rgba(255,255,255,0.1);
+      background: rgba(255, 255, 255, 0.9);
       padding: 10px;
       margin: 8px 0;
       border-radius: 10px;
       font-size: 14px;
+      border-left: 4px solid #ff6b81;
     }
     .de-para {
       font-weight: bold;
-      color: #ff9aa2;
+      color: #d43b67;
+      font-family: 'Dancing Script', cursive;
     }
+
+    /* Decoración inferior (nubes y corazones) */
+    .clouds {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 100px;
+      background: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cGF0aCBkPSJNMCAwIEwgMTAwIDAgTCAxMDAgMTAwIEwgMCAxMDAgWiIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjgpIiAvPgo8L3N2Zz4=');
+      background-size: cover;
+      clip-path: polygon(0 0, 100% 0, 100% 80%, 85% 90%, 70% 80%, 55% 90%, 40% 80%, 25% 90%, 10% 80%, 0 90%);
+    }
+
+    .heart-decoration {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 24px;
+      color: #ff6b81;
+    }
+
+    /* Estilo de carga */
     .loading {
       text-align: center;
       padding: 20px;
       font-size: 18px;
+      color: #d43b67;
     }
+
+    /* Google Fonts: Dancing Script */
+    @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&display=swap');
   </style>
 </head>
 <body>
+
+  <!-- Corazones flotantes -->
+  <div class="heart" style="top: 10%; left: 5%;">❤️</div>
+  <div class="heart" style="top: 20%; right: 10%;">💖</div>
+  <div class="heart" style="bottom: 15%; left: 15%;">💕</div>
+  <div class="heart" style="bottom: 25%; right: 20%;">💘</div>
+  <div class="heart" style="top: 40%; left: 30%;">💝</div>
+  <div class="heart" style="top: 50%; right: 30%;">💗</div>
 
   <!-- Pantalla de acceso -->
   <div id="login" class="screen active">
@@ -77,7 +164,7 @@
     </select>
     <input type="password" id="passInput" placeholder="Tu contraseña..." />
     <button onclick="checkLogin()">Entrar</button>
-    <p id="loginError" style="color:#ff6b6b; margin-top:10px;"></p>
+    <p id="loginError" style="color:#ff6b81; margin-top:10px;"></p>
   </div>
 
   <!-- Buzón principal -->
@@ -96,14 +183,17 @@
     <button onclick="sendMessage()">Enviar Mensaje</button>
   </div>
 
+  <!-- Decoración inferior -->
+  <div class="clouds"></div>
+
   <script>
     // 🔑 Define tus usuarios y contraseñas
     const USERS = {
       "Zury": "nabi2006",   // ← CAMBIA ESTA CONTRASEÑA
-      "Emma": "0218"    // ← CAMBIA ESTA CONTRASEÑA
+      "Emma": "CarMa0218"   // ← CAMBIA ESTA CONTRASEÑA
     };
 
-    // Firebase (solo lectura/escritura si sabes la clave)
+    // Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyB8Xv2Z0sCzFwkx2IMximjKDJO_5Up3w-8",
       authDomain: "buzon-secreto.firebaseapp.com",
@@ -138,37 +228,34 @@
     }
 
     function loadMessages() {
-  const messagesDiv = document.getElementById('messages');
-  messagesDiv.innerHTML = '<div class="loading">Cargando...</div>';
+      const messagesDiv = document.getElementById('messages');
+      messagesDiv.innerHTML = '<div class="loading">Cargando mensajes...</div>';
 
-  messagesRef.on('value', (snapshot) => {
-    const data = snapshot.val();
-    if (data) {
-      // Convertir el objeto a array
-      const allMessages = Object.values(data);
-      // Filtrar solo los mensajes dirigidos a currentUser
-      const filtered = allMessages.filter(msg => msg.para === currentUser);
-      // Ordenar por tiempo (más reciente primero)
-      filtered.sort((a, b) => b.time - a.time);
+      messagesRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+          const allMessages = Object.values(data);
+          const filtered = allMessages.filter(msg => msg.para === currentUser);
+          filtered.sort((a, b) => b.time - a.time);
 
-      if (filtered.length > 0) {
-        messagesDiv.innerHTML = filtered.map(msg => 
-          `<div class="message">
-            <div class="de-para">De: ${msg.de} → Para: ${msg.para}</div>
-            <div>${msg.text}</div>
-            <div style="font-size:11px;color:#aaa;">${new Date(msg.time).toLocaleString()}</div>
-          </div>`
-        ).join('');
-      } else {
-        messagesDiv.innerHTML = '<p>No hay mensajes para ti aún. 💕</p>';
-      }
-    } else {
-      messagesDiv.innerHTML = '<p>No hay mensajes aún. ¡Sé el primero en escribir! 💖</p>';
+          if (filtered.length > 0) {
+            messagesDiv.innerHTML = filtered.map(msg => 
+              `<div class="message">
+                <div class="de-para">De: ${msg.de} → Para: ${msg.para}</div>
+                <div>${msg.text}</div>
+                <div style="font-size:11px;color:#d43b67;">${new Date(msg.time).toLocaleString()}</div>
+              </div>`
+            ).join('');
+          } else {
+            messagesDiv.innerHTML = '<p>No hay mensajes para ti aún. 💕</p>';
+          }
+        } else {
+          messagesDiv.innerHTML = '<p>No hay mensajes aún. ¡Sé el primero en escribirle a tu amor! 💖</p>';
+        }
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+      });
     }
-    // Desplazar al final
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
-  });
-}
+
     function sendMessage() {
       const para = document.getElementById('paraSelect').value;
       const text = document.getElementById('msgText').value.trim();
