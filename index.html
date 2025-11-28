@@ -3,19 +3,19 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Buzón Secreto 💖</title>
+  <title>💌 Nuestro Buzón</title>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
     body {
-      background: linear-gradient(to bottom, #2c003e, #1a1a2e);
+      background: linear-gradient(135deg, #2c003e, #1a1a2e);
       color: white;
       min-height: 100vh;
-      padding: 20px;
       display: flex;
       justify-content: center;
       align-items: center;
+      padding: 20px;
     }
     .screen { display: none; width: 100%; max-width: 500px; text-align: center; }
     .active { display: block; }
@@ -33,6 +33,10 @@
       background: #ff6b6b;
       color: white;
       cursor: pointer;
+      transition: background 0.3s;
+    }
+    button:hover {
+      background: #ff5252;
     }
     #messages {
       background: rgba(0,0,0,0.2);
@@ -54,16 +58,25 @@
       font-weight: bold;
       color: #ff9aa2;
     }
+    .loading {
+      text-align: center;
+      padding: 20px;
+      font-size: 18px;
+    }
   </style>
 </head>
 <body>
 
   <!-- Pantalla de acceso -->
   <div id="login" class="screen active">
-    <h2>🔒 Acceso Secreto</h2>
-    <p>Ingresa la contraseña para entrar al buzón.</p>
-    <input type="password" id="passInput" placeholder="Contraseña..." />
-    <button onclick="checkPassword()">Entrar</button>
+    <h2>🔐 Acceso al Buzón</h2>
+    <p>Elige tu nombre y escribe tu contraseña.</p>
+    <select id="userSelect">
+      <option value="Zury">Zury</option>
+      <option value="Emma">Emma</option>
+    </select>
+    <input type="password" id="passInput" placeholder="Tu contraseña..." />
+    <button onclick="checkLogin()">Entrar</button>
     <p id="loginError" style="color:#ff6b6b; margin-top:10px;"></p>
   </div>
 
@@ -71,17 +84,12 @@
   <div id="buzon" class="screen">
     <h2>💌 Nuestro Buzón</h2>
     <div id="messages">
-      <p>Cargando...</p>
+      <div class="loading">Cargando...</div>
     </div>
 
-    <select id="deSelect">
-      <option value="Zury">Zury</option>
-      <option value="Emma">Emma</option>
-     </select>
-
     <select id="paraSelect">
-      <option value="Zury">Para:Zury</option>
-      <option value="Emma">Para:Emma Tú</option>
+      <option value="Emma">Para: Emma</option>
+      <option value="Zury">Para: Zury</option>
     </select>
 
     <input type="text" id="msgText" placeholder="Escribe tu mensaje..." maxlength="120" />
@@ -89,8 +97,11 @@
   </div>
 
   <script>
-    // 🔑 Contraseña secreta (cámbiala por la que quieras)
-    const CLAVE_SECRETA = "mochito123"; // ← ¡EDITA ESTA CONTRASEÑA!
+    // 🔑 Define tus usuarios y contraseñas
+    const USERS = {
+      "Zury": "nabi2006",   // ← CAMBIA ESTA CONTRASEÑA
+      "Emma": "0218"    // ← CAMBIA ESTA CONTRASEÑA
+    };
 
     // Firebase (solo lectura/escritura si sabes la clave)
     const firebaseConfig = {
@@ -107,9 +118,13 @@
     const db = firebase.database();
     const messagesRef = db.ref('mensajes');
 
-    function checkPassword() {
+    let currentUser = null;
+
+    function checkLogin() {
+      const user = document.getElementById('userSelect').value;
       const pass = document.getElementById('passInput').value;
-      if (pass === CLAVE_SECRETA) {
+      if (USERS[user] === pass) {
+        currentUser = user;
         showScreen('buzon');
         loadMessages();
       } else {
@@ -123,12 +138,15 @@
     }
 
     function loadMessages() {
-      messagesRef.on('value', (snapshot) => {
-        const div = document.getElementById('messages');
+      const messagesDiv = document.getElementById('messages');
+      messagesDiv.innerHTML = '<div class="loading">Cargando mensajes...</div>';
+
+      // Filtrar mensajes dirigidos a currentUser
+      messagesRef.orderByChild('para').equalTo(currentUser).on('value', (snapshot) => {
         const data = snapshot.val();
         if (data) {
           const msgs = Object.values(data).sort((a, b) => b.time - a.time);
-          div.innerHTML = msgs.map(m => 
+          messagesDiv.innerHTML = msgs.map(m => 
             `<div class="message">
               <div class="de-para">De: ${m.de} → Para: ${m.para}</div>
               <div>${m.text}</div>
@@ -136,24 +154,24 @@
             </div>`
           ).join('');
         } else {
-          div.innerHTML = '<p>No hay mensajes aún. ¡Sé el primero! 💕</p>';
+          messagesDiv.innerHTML = '<p>No hay mensajes aún. ¡Sé el primero en escribirle a tu amor! 💕</p>';
         }
-        div.scrollTop = div.scrollHeight;
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
       });
     }
 
     function sendMessage() {
-      const de = document.getElementById('deSelect').value;
       const para = document.getElementById('paraSelect').value;
       const text = document.getElementById('msgText').value.trim();
-      if (text) {
+      if (text && currentUser) {
         messagesRef.push({
-          de: de,
+          de: currentUser,
           para: para,
           text: text,
           time: firebase.database.ServerValue.TIMESTAMP
         });
         document.getElementById('msgText').value = '';
+        document.getElementById('msgText').focus();
       }
     }
 
