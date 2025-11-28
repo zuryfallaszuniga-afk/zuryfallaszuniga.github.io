@@ -138,28 +138,37 @@
     }
 
     function loadMessages() {
-      const messagesDiv = document.getElementById('messages');
-      messagesDiv.innerHTML = '<div class="loading">Cargando mensajes...</div>';
+  const messagesDiv = document.getElementById('messages');
+  messagesDiv.innerHTML = '<div class="loading">Cargando...</div>';
 
-      // Filtrar mensajes dirigidos a currentUser
-      messagesRef.orderByChild('para').equalTo(currentUser).on('value', (snapshot) => {
-        const data = snapshot.val();
-        if (data) {
-          const msgs = Object.values(data).sort((a, b) => b.time - a.time);
-          messagesDiv.innerHTML = msgs.map(m => 
-            `<div class="message">
-              <div class="de-para">De: ${m.de} → Para: ${m.para}</div>
-              <div>${m.text}</div>
-              <div style="font-size:11px;color:#aaa;">${new Date(m.time).toLocaleString()}</div>
-            </div>`
-          ).join('');
-        } else {
-          messagesDiv.innerHTML = '<p>No hay mensajes aún. ¡Sé el primero en escribirle a tu amor! 💕</p>';
-        }
-        messagesDiv.scrollTop = messagesDiv.scrollHeight;
-      });
+  messagesRef.on('value', (snapshot) => {
+    const data = snapshot.val();
+    if (data) {
+      // Convertir el objeto a array
+      const allMessages = Object.values(data);
+      // Filtrar solo los mensajes dirigidos a currentUser
+      const filtered = allMessages.filter(msg => msg.para === currentUser);
+      // Ordenar por tiempo (más reciente primero)
+      filtered.sort((a, b) => b.time - a.time);
+
+      if (filtered.length > 0) {
+        messagesDiv.innerHTML = filtered.map(msg => 
+          `<div class="message">
+            <div class="de-para">De: ${msg.de} → Para: ${msg.para}</div>
+            <div>${msg.text}</div>
+            <div style="font-size:11px;color:#aaa;">${new Date(msg.time).toLocaleString()}</div>
+          </div>`
+        ).join('');
+      } else {
+        messagesDiv.innerHTML = '<p>No hay mensajes para ti aún. 💕</p>';
+      }
+    } else {
+      messagesDiv.innerHTML = '<p>No hay mensajes aún. ¡Sé el primero en escribir! 💖</p>';
     }
-
+    // Desplazar al final
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  });
+}
     function sendMessage() {
       const para = document.getElementById('paraSelect').value;
       const text = document.getElementById('msgText').value.trim();
