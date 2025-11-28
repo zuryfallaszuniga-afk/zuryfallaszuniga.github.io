@@ -1,59 +1,161 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>¡Atrápame si puedes!</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Buzón Secreto 💖</title>
+  <!-- Firebase SDK (modo compatibilidad - funciona en HTML puro) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
   <style>
-    body {
+    * {
       margin: 0;
-      height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      background: #222;
-      font-family: Arial, sans-serif;
-      overflow: hidden;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
-    #boton {
-      padding: 15px 30px;
-      font-size: 18px;
-      background: #ff4757;
+    body {
+      background: linear-gradient(to bottom, #1a1a2e, #16213e);
       color: white;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      text-align: center;
+    }
+    h1 {
+      margin: 20px 0;
+      font-weight: 600;
+      color: #ff9aa2;
+    }
+    #messages {
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 15px;
+      padding: 20px;
+      margin: 20px 0;
+      max-height: 400px;
+      overflow-y: auto;
+      text-align: left;
+    }
+    .message {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 10px;
+      position: relative;
+    }
+    .message::before {
+      content: "💌";
+      position: absolute;
+      left: -25px;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+    input, button {
+      padding: 12px 20px;
+      margin: 10px 5px;
       border: none;
       border-radius: 50px;
-      cursor: pointer;
-      transition: transform 0.2s;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      font-size: 16px;
+      outline: none;
     }
-    #boton:hover {
-      background: #ff6b81;
-      transform: scale(1.1);
+    input {
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      width: 60%;
+    }
+    button {
+      background: #ff6b6b;
+      color: white;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    button:hover {
+      background: #ff5252;
+    }
+    .time {
+      font-size: 12px;
+      color: #aaa;
+      float: right;
+    }
+    @media (max-width: 600px) {
+      input { width: 70%; }
     }
   </style>
 </head>
 <body>
-  <button id="boton">¡Haz clic en mí!</button>
+  <div class="container">
+    <h1>💌 Nuestro Buzón Secreto</h1>
+    <div id="messages">
+      <p>Cargando mensajes...</p>
+    </div>
+    <input type="text" id="newMessage" placeholder="Escribe un mensajito..." maxlength="140" autocomplete="off" />
+    <button onclick="sendMessage()">Enviar</button>
+  </div>
 
   <script>
-    const boton = document.getElementById('boton');
-    const anchoVentana = window.innerWidth;
-    const altoVentana = window.innerHeight;
+    // 🔑 Configuración de tu proyecto Firebase (NO CAMBIES ESTO A MENOS QUE CAMBIES PROYECTO)
+    const firebaseConfig = {
+      apiKey: "AIzaSyB8Xv2Z0sCzFwkx2IMximjKDJO_5Up3w-8",
+      authDomain: "buzon-secreto.firebaseapp.com",
+      databaseURL: "https://buzon-secreto-default-rtdb.firebaseio.com",
+      projectId: "buzon-secreto",
+      storageBucket: "buzon-secreto.firebasestorage.app",
+      messagingSenderId: "1050514983896",
+      appId: "1:1050514983896:web:4e6637e163bfa5667200ad",
+      measurementId: "G-0W9K588MN6"
+    };
 
-    boton.addEventListener('mouseover', () => {
-      // Nueva posición aleatoria
-      const nuevoX = Math.random() * (anchoVentana - 150);
-      const nuevoY = Math.random() * (altoVentana - 80);
-      boton.style.position = 'absolute';
-      boton.style.left = `${nuevoX}px`;
-      boton.style.top = `${nuevoY}px`;
+    // ✅ Inicializa Firebase en modo compatible (funciona en HTML puro)
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const messagesRef = db.ref('mensajes');
+
+    // 📥 Cargar mensajes en tiempo real
+    messagesRef.on('value', (snapshot) => {
+      const messagesDiv = document.getElementById('messages');
+      const data = snapshot.val();
+      if (data) {
+        const messagesArray = Object.values(data);
+        // Ordenar por tiempo (más reciente primero)
+        messagesArray.sort((a, b) => b.time - a.time);
+        messagesDiv.innerHTML = '';
+        messagesArray.forEach(msg => {
+          const div = document.createElement('div');
+          div.className = 'message';
+          const timeStr = new Date(msg.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          div.innerHTML = `<span class="time">${timeStr}</span>${msg.text}`;
+          messagesDiv.appendChild(div);
+        });
+      } else {
+        messagesDiv.innerHTML = '<p>¡Sé el primero en escribir un mensajito! 💕</p>';
+      }
+      // Desplazarse al final
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
     });
 
-    boton.addEventListener('click', () => {
-      alert('¡Lo lograste! 🎉');
-      // Reinicia posición al centro
-      boton.style.position = 'static';
+    // 📤 Enviar nuevo mensaje
+    function sendMessage() {
+      const input = document.getElementById('newMessage');
+      const text = input.value.trim();
+      if (text) {
+        messagesRef.push({
+          text: text,
+          time: firebase.database.ServerValue.TIMESTAMP
+        });
+        input.value = '';
+        input.focus();
+      }
+    }
+
+    // ✨ Enviar con Enter
+    document.getElementById('newMessage').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        sendMessage();
+      }
     });
   </script>
 </body>
 </html>
-
