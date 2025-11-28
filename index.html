@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Círculo Seguidor</title>
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      background: #1a1a1a;
+      overflow: hidden;
+      cursor: none;
+    }
+    #seguir {
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      background: cyan;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      transition: transform 0.1s ease-out;
+    }
+  </style>
+</head>
+<body>
+  <div id="seguir"></div>
+
+  <script>
+    const circulo = document.getElementById('seguir');
+    document.addEventListener('mousemove', (e) => {
+      circulo.style.left = e.clientX + 'px';
+      circulo.style.top = e.clientY + 'px';
+    });
+  </script>
+</body>
+</html>
